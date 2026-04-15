@@ -47,8 +47,7 @@
         .table-wrapper { overflow-x: auto; }
         table { width: 100%; min-width: 500px; text-align: left; border-collapse: collapse; }
         th, td { padding: 12px; border-bottom: 1px solid #333; }
-        .verify-img { width: 40px; height: 40px; border-radius: 5px; object-fit: cover; border: 1px solid var(--gold); vertical-align: middle; margin-right: 10px; cursor: pointer; transition: transform 0.2s; }
-        .verify-img:hover { transform: scale(1.1); }
+        .verify-img { width: 40px; height: 40px; border-radius: 5px; object-fit: cover; border: 1px solid var(--gold); vertical-align: middle; margin-right: 10px; cursor: pointer; }
         .status-badge { display: flex; align-items: center; gap: 5px; color: #27ae60; font-weight: bold; font-size: 0.8rem; }
     </style>
 </head>
@@ -149,7 +148,6 @@
 <div class="news-ticker"><div id="tickerContent" class="ticker-content"></div></div>
 
 <script>
-    // 1. إعداد Firebase الخاص بك
     const firebaseConfig = {
       apiKey: "AIzaSyBLfk_aNRZ1h0UoRJMUwUqriB_Mptbggh8",
       authDomain: "irc-festival.firebaseapp.com",
@@ -165,7 +163,6 @@
 
     let acts = [], scores = [], users = [], tickerText = "";
 
-    // 2. مزامنة البيانات من Firebase فوراً عند أي تغيير
     db.ref('/').on('value', (snapshot) => {
         const data = snapshot.val() || {};
         acts = data.acts || ["FIFA 26 Elite", "Cyber Gaming"];
@@ -173,11 +170,10 @@
         users = data.users || [];
         tickerText = data.ticker || "🏆 IRC FESTIVAL 2026: THE BIGGEST TECH EVENT IS COMING 🏆";
         refreshUI();
+        restartTicker(); // إعادة تشغيل الشريط عند تحديث البيانات
     });
 
-    function sync() {
-        db.ref('/').set({ acts, scores, users, ticker: tickerText });
-    }
+    function sync() { db.ref('/').set({ acts, scores, users, ticker: tickerText }); }
 
     function refreshUI() {
         document.getElementById('tickerContent').innerText = tickerText;
@@ -198,12 +194,29 @@
                 <td>${u.n}</td>
                 <td>${u.p}</td>
                 <td>
-                    ${u.v ? `<div class="status-badge"><img src="${u.img}" class="verify-img" onclick="downloadImage('${u.img}')"> ✅ Verified</div>` : `<button onclick="verifyParticipant(${i})" class="btn-gold" style="padding:5px 12px; font-size:0.7rem; width:auto;">VERIFY</button>`}
+                    ${u.v ? `<div class="status-badge"><img src="${u.img}" class="verify-img" onclick="downloadImage('${u.img}', '${u.n}')"> ✅ Verified</div>` : `<button onclick="verifyParticipant(${i})" class="btn-gold" style="padding:5px 12px; font-size:0.7rem; width:auto;">VERIFY</button>`}
                 </td>
             </tr>`).join('');
     }
 
-    // --- الدوال الأساسية للأدمن والمستخدم ---
+    // إصلاح مشكلة حركة شريط الأخبار
+    function restartTicker() {
+        const ticker = document.getElementById('tickerContent');
+        ticker.style.animation = 'none';
+        ticker.offsetHeight; 
+        ticker.style.animation = 'ticker 30s linear infinite';
+    }
+
+    // إصلاح مشكلة تحميل الصورة (تعمل على الجوال واللابتوب)
+    function downloadImage(dataUrl, userName) {
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = `IRC_Verify_${userName}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
     function addScore() {
         const m = document.getElementById('mIn').value, v = document.getElementById('sIn').value;
         if(m && v) { scores.unshift({m, v}); sync(); document.getElementById('mIn').value = ""; document.getElementById('sIn').value = ""; }
@@ -220,25 +233,10 @@
         input.onchange = e => {
             let file = e.target.files[0];
             let reader = new FileReader();
-            reader.onload = () => {
-                users[i].v = true;
-                users[i].img = reader.result;
-                sync();
-            };
+            reader.onload = () => { users[i].v = true; users[i].img = reader.result; sync(); };
             reader.readAsDataURL(file);
         };
         input.click();
-    }
-
-    // الدالة الجديدة لتحميل الصورة عند الضغط عليها للأدمن
-    function downloadImage(dataUrl) {
-        // إنشاء رابط وهمي لتحميل الصورة
-        const link = document.createElement('a');
-        link.href = dataUrl;
-        link.download = 'participant_image.png'; // اسم الملف عند التحميل
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
     }
 
     document.getElementById('bookingForm').onsubmit = function(e) {
@@ -276,7 +274,6 @@
 
     function tryLogin() { if(document.getElementById('adminPass').value === "1234") showPage('admin-dash'); else alert("Denied"); }
 
-    // Particles & Countdown
     const canvas = document.getElementById('bg-canvas');
     const ctx = canvas.getContext('2d');
     let particles = [];
