@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IRC FESTIVAL 2026 - Ultra Vision</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #D4AF37; --bg: #020202; --glass: rgba(255, 255, 255, 0.03); --accent: #ffd700; }
+        * { box-sizing: border-box; margin:0; padding:0; font-family: 'Montserrat', sans-serif; }
+        
+        body { background: var(--bg); color: #fff; overflow-x: hidden; min-height: 100vh; perspective: 1000px; }
+
+        /* خلفية جزيئات الذهب التفاعلية */
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
+
+        header { padding: 50px 20px; text-align: center; position: relative; overflow: hidden; }
+        header h1 { 
+            font-size: clamp(1.5rem, 8vw, 3.5rem); 
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 8px;
+            background: linear-gradient(90deg, #fff, var(--gold), #fff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.4));
+            animation: glow 3s infinite alternate;
+        }
+
+        @keyframes glow { from { filter: drop-shadow(0 0 5px var(--gold)); } to { filter: drop-shadow(0 0 20px var(--gold)); } }
+
+        nav { display: flex; justify-content: center; gap: 10px; background: rgba(0,0,0,0.8); padding: 15px; position: sticky; top: 0; z-index: 1000; backdrop-filter: blur(15px); border-bottom: 1px solid var(--gold); }
+        nav button { background: none; border: 1px solid #444; color: #fff; padding: 10px 20px; border-radius: 50px; cursor: pointer; font-weight: 700; font-size: 0.6rem; transition: 0.3s; text-transform: uppercase; }
+        nav button.active { background: var(--gold); color: #000; border-color: var(--gold); box-shadow: 0 0 20px var(--gold); }
+
+        .container { max-width: 1100px; margin: 30px auto; padding: 0 20px; position: relative; }
+        .page { display: none; animation: slideUp 0.6s cubic-bezier(0.23, 1, 0.32, 1); }
+        .page.active { display: block; }
+
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* الكروت بنظام الـ 3D Tilt */
+        .card { 
+            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            padding: 30px; border-radius: 25px; margin-bottom: 25px;
+            backdrop-filter: blur(20px);
+            transition: transform 0.1s ease-out, box-shadow 0.3s;
+            transform-style: preserve-3d;
+        }
+        .card:hover { border-color: var(--gold); box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
+
+        /* العداد التنازلي الفخم */
+        .countdown-container { text-align: center; margin-bottom: 40px; }
+        .timer-box { display: inline-flex; gap: 15px; background: rgba(212, 175, 55, 0.1); padding: 20px 40px; border-radius: 100px; border: 1px solid var(--gold); box-shadow: inset 0 0 20px rgba(212, 175, 55, 0.2); }
+        .timer-unit { font-size: 1.5rem; font-weight: 900; color: #fff; text-shadow: 0 0 10px var(--gold); }
+
+        /* الخريطة */
+        .map-canvas { position: relative; width: 100%; aspect-ratio: 16/10; background: #000; border-radius: 20px; overflow: hidden; border: 1px solid #333; }
+        .map-road { position: absolute; background: #151515; }
+        .road-v { width: 60px; height: 100%; left: 70%; }
+        .road-h { height: 50px; width: 100%; bottom: 20%; }
+        .zone { position: absolute; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 0.65rem; color: #fff; text-align: center; transition: 0.4s; cursor: pointer; }
+        .z-stage { top: 10%; left: 65%; width: 120px; height: 70px; background: #E67E22; box-shadow: 0 0 30px #E67E22; }
+        .z-sport { top: 10%; left: 10%; width: 220px; height: 120px; background: #2E5A6E; box-shadow: 0 0 30px #2E5A6E; }
+        .z-food { top: 25%; left: 82%; width: 45px; height: 160px; background: #F1C40F; color: #000; writing-mode: vertical-rl; box-shadow: 0 0 30px #F1C40F; }
+        .z-parking { bottom: 5%; left: 5%; width: 280px; height: 60px; background: #333; border: 2px dashed #555; }
+
+        /* التذكرة */
+        #ticketUI { display: none; background: #fff; color: #000; padding: 50px; border: 15px double #000; text-align: center; max-width: 450px; margin: 0 auto; position: relative; }
+        #ticketUI::before { content: 'IRC 2026'; position: absolute; top: 10px; left: 10px; font-size: 0.5rem; opacity: 0.3; }
+
+        /* شريط الأخبار المتحرك */
+        .news-ticker { position: fixed; bottom: 0; width: 100%; background: var(--gold); color: #000; padding: 8px 0; font-weight: 900; font-size: 0.7rem; text-transform: uppercase; z-index: 2000; overflow: hidden; }
+        .ticker-content { display: inline-block; white-space: nowrap; animation: ticker 30s linear infinite; }
+        @keyframes ticker { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+
+        input, select { width: 100%; padding: 15px; margin: 10px 0; background: rgba(0,0,0,0.6); border: 1px solid #444; color: white; border-radius: 12px; font-size: 0.9rem; }
+        .btn-gold { width: 100%; padding: 18px; background: linear-gradient(90deg, #D4AF37, #f1c40f, #D4AF37); background-size: 200%; border: none; border-radius: 12px; font-weight: 900; cursor: pointer; color: #000; transition: 0.5s; }
+        .btn-gold:hover { background-position: right; box-shadow: 0 0 30px var(--gold); }
+
+        .btn-del { background: #ff4757; color: white; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 0.7rem; }
+    </style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<header><h1>IRC FESTIVAL 2026</h1></header>
+
+<nav id="mainNav">
+    <button onclick="showPage('map-page')" class="nav-btn active">Live Map</button>
+    <button onclick="showPage('results-page')" class="nav-btn">Standings</button>
+    <button onclick="showPage('reg-page')" class="nav-btn">Book Now</button>
+    <button onclick="showPage('ticket-page')" class="nav-btn">My Ticket</button>
+    <button onclick="showPage('admin-login')" class="nav-btn">Admin</button>
+</nav>
+
+<div class="container">
+    <div id="map-page" class="page active">
+        <div class="countdown-container">
+            <div class="timer-box">
+                <div id="timer" class="timer-unit">00d : 00h : 00m : 00s</div>
+            </div>
+        </div>
+        <div class="card" style="padding: 10px;">
+            <div class="map-canvas">
+                <div class="map-road road-v"></div><div class="map-road road-h"></div>
+                <div class="zone z-stage">GRAND STAGE</div>
+                <div class="zone z-sport">SPORTS ARENA</div>
+                <div class="zone z-food">FOOD & BEV</div>
+                <div class="zone z-parking">FREE PARKING</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="results-page" class="page">
+        <div class="card">
+            <h2 style="color:var(--gold); margin-bottom:20px; text-align:center;">Tournament Live Scores</h2>
+            <div id="scoreList"></div>
+        </div>
+    </div>
+
+    <div id="reg-page" class="page">
+        <div class="card">
+            <h2>Secure Your Spot</h2>
+            <form id="bookingForm">
+                <input type="text" id="uName" placeholder="Participant Name" required>
+                <input type="tel" id="uPhone" placeholder="Mobile Number" required>
+                <select id="uAct" required></select>
+                <button type="submit" class="btn-gold">Register & Generate ID</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="ticket-page" class="page">
+        <div class="card" id="searchArea">
+            <h2>Track Your Entry</h2>
+            <input type="tel" id="checkPhone" placeholder="Enter Registered Phone">
+            <button onclick="checkMyTicket()" class="btn-gold">Check Status</button>
+        </div>
+        <div id="ticketUI">
+            </div>
+    </div>
+
+    <div id="admin-login" class="page">
+        <div class="card" style="max-width:400px; margin:50px auto; text-align:center;">
+            <h2>Admin Portal</h2>
+            <input type="password" id="adminPass" placeholder="Security Key">
+            <button onclick="tryLogin()" class="btn-gold">Enter Dashboard</button>
+        </div>
+    </div>
+
+    <div id="admin-dash" class="page">
+        <div style="display:flex; justify-content:space-between; margin-bottom:30px;">
+            <h2>Master Dashboard</h2>
+            <button onclick="location.reload()" style="background:#ff4757; color:white; border:none; padding:10px 20px; border-radius:10px; cursor:pointer;">Exit</button>
+        </div>
+        
+        <div class="card">
+            <h3>Live News Ticker Management</h3>
+            <input type="text" id="tickerInput" placeholder="Enter new scrolling text here...">
+            <button onclick="updateTickerText()" class="btn-gold" style="padding:10px;">Update Ticker Text</button>
+        </div>
+
+        <div class="card">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                <div>
+                    <h3>Events</h3>
+                    <input type="text" id="newEv" placeholder="Event Title">
+                    <button onclick="addEvent()" class="btn-gold" style="padding:10px;">Add</button>
+                    <div id="adminActsList" style="margin-top:10px;"></div>
+                </div>
+                <div>
+                    <h3>Scores</h3>
+                    <input type="text" id="mIn" placeholder="Match"><input type="text" id="sIn" placeholder="Result">
+                    <button onclick="addScore()" class="btn-gold" style="padding:10px;">Update</button>
+                    <div id="adminScoresList" style="margin-top:10px;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <h3>Participant Verification</h3>
+            <table style="width:100%; text-align:left;">
+                <thead><tr style="color:var(--gold);"><th>Name</th><th>Phone</th><th>Status</th></tr></thead>
+                <tbody id="userTable"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="news-ticker">
+    <div id="tickerContent" class="ticker-content">
+        🏆 IRC FESTIVAL 2026: THE BIGGEST TECH EVENT IS COMING • REGISTER NOW TO SECURE YOUR SPOT • LIVE UPDATES EVERY MINUTE • PARKING IS FREE FOR ALL REGISTERED USERS • WELCOME TO THE FUTURE 🏆
+    </div>
+</div>
+
+<script>
+    // --- Canvas Particles Logic ---
+    const canvas = document.getElementById('bg-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    const mouse = { x: null, y: null };
+
+    window.addEventListener('mousemove', (e) => { mouse.x = e.x; mouse.y = e.y; });
+
+    class Particle {
+        constructor() {
+            this.x = Math.random() * canvas.width;
+            this.y = Math.random() * canvas.height;
+            this.size = Math.random() * 2 + 1;
+            this.baseX = this.x; this.baseY = this.y;
+            this.density = (Math.random() * 30) + 1;
+        }
+        draw() {
+            ctx.fillStyle = 'rgba(212, 175, 55, 0.5)';
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.closePath(); ctx.fill();
+        }
+        update() {
+            let dx = mouse.x - this.x; let dy = mouse.y - this.y;
+            let distance = Math.sqrt(dx*dx + dy*dy);
+            if (distance < 100) {
+                this.x -= dx/10; this.y -= dy/10;
+            } else {
+                if (this.x !== this.baseX) this.x -= (this.x - this.baseX)/20;
+                if (this.y !== this.baseY) this.y -= (this.y - this.baseY)/20;
+            }
+        }
+    }
+
+    function init() {
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        particles = [];
+        for (let i = 0; i < 150; i++) particles.push(new Particle());
+    }
+
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => { p.draw(); p.update(); });
+        requestAnimationFrame(animate);
+    }
+    init(); animate();
+
+    // --- Core Logic ---
+    let acts = JSON.parse(localStorage.getItem('irc_v2_acts')) || ["FIFA 26 Elite", "Street Soccer", "Cyber Gaming"];
+    let scores = JSON.parse(localStorage.getItem('irc_v2_scores')) || [];
+    let users = JSON.parse(localStorage.getItem('irc_v2_users')) || [];
+    // نص الشريط الافتراضي
+    let tickerText = localStorage.getItem('irc_ticker_text') || "🏆 IRC FESTIVAL 2026: THE BIGGEST TECH EVENT IS COMING • REGISTER NOW TO SECURE YOUR SPOT • LIVE UPDATES EVERY MINUTE • PARKING IS FREE FOR ALL REGISTERED USERS • WELCOME TO THE FUTURE 🏆";
+
+    function startCountdown() {
+        const target = new Date("May 8, 2026 00:00:00").getTime();
+        setInterval(() => {
+            const now = new Date().getTime();
+            const diff = target - now;
+            const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const s = Math.floor((diff % (1000 * 60)) / 1000);
+            document.getElementById("timer").innerHTML = `${d}d : ${h}h : ${m}m : ${s}s`;
+        }, 1000);
+    }
+
+    function showPage(id) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        if(event) event.target.classList.add('active');
+        refresh();
+    }
+
+    function refresh() {
+        // تحديث نص الشريط في الواجهة
+        document.getElementById('tickerContent').innerText = tickerText;
+        
+        document.getElementById('uAct').innerHTML = acts.map(a => `<option value="${a}">${a}</option>`).join('');
+        if(document.getElementById('adminActsList')) {
+            document.getElementById('adminActsList').innerHTML = acts.map((a, i) => `<div class="admin-item">${a} <button class="btn-del" onclick="deleteEvent(${i})">X</button></div>`).join('');
+        }
+        if(document.getElementById('adminScoresList')) {
+            document.getElementById('adminScoresList').innerHTML = scores.map((s, i) => `<div class="admin-item">${s.m} <button class="btn-del" onclick="deleteScore(${i})">X</button></div>`).join('');
+        }
+        document.getElementById('scoreList').innerHTML = scores.map(s => `<div style="padding:15px; background:rgba(255,255,255,0.05); margin-bottom:10px; border-radius:15px; border-left:5px solid var(--gold); display:flex; justify-content:space-between;"><span>${s.m}</span><b style="color:var(--gold)">${s.v}</b></div>`).join('');
+        document.getElementById('userTable').innerHTML = users.map((u, i) => `<tr><td>${u.n}</td><td>${u.p}</td><td>${!u.v ? `<button onclick="verifyParticipant(${i})" class="btn-gold" style="padding:5px 10px; font-size:0.6rem;">VERIFY</button>` : '<span style="color:#27ae60">✅ Verified</span>'}</td></tr>`).join('');
+    }
+
+    // وظيفة تحديث نص الشريط للأدمن
+    function updateTickerText() {
+        const newText = document.getElementById('tickerInput').value;
+        if(newText) {
+            tickerText = newText;
+            localStorage.setItem('irc_ticker_text', tickerText);
+            refresh();
+            alert("Ticker text updated successfully!");
+            document.getElementById('tickerInput').value = "";
+        }
+    }
+
+    function addEvent() { const v = document.getElementById('newEv').value; if(v) { acts.push(v); localStorage.setItem('irc_v2_acts', JSON.stringify(acts)); refresh(); document.getElementById('newEv').value=""; } }
+    function deleteEvent(i) { acts.splice(i, 1); localStorage.setItem('irc_v2_acts', JSON.stringify(acts)); refresh(); }
+    function addScore() { const m = document.getElementById('mIn').value; const v = document.getElementById('sIn').value; if(m && v) { scores.unshift({m, v}); localStorage.setItem('irc_v2_scores', JSON.stringify(scores)); refresh(); } }
+    function deleteScore(i) { scores.splice(i, 1); localStorage.setItem('irc_v2_scores', JSON.stringify(scores)); refresh(); }
+    function tryLogin() { if(document.getElementById('adminPass').value === "1234") showPage('admin-dash'); else alert("Access Denied"); }
+
+    function verifyParticipant(i) {
+        let inp = document.createElement('input'); inp.type = 'file';
+        inp.onchange = _ => {
+            let reader = new FileReader();
+            reader.onload = () => { users[i].v = true; localStorage.setItem('irc_v2_users', JSON.stringify(users)); refresh(); };
+            reader.readAsDataURL(inp.files[0]);
+        };
+        inp.click();
+    }
+
+    function checkMyTicket() {
+        const phone = document.getElementById('checkPhone').value;
+        const userTickets = users.filter(u => u.p === phone && u.v);
+        
+        if(userTickets.length > 0) {
+            document.getElementById('searchArea').style.display = 'none';
+            const ticketUI = document.getElementById('ticketUI');
+            ticketUI.style.display = 'block';
+            
+            ticketUI.innerHTML = `<h1 style="border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;">IRC PASS</h1>`;
+            
+            userTickets.forEach(user => {
+                ticketUI.innerHTML += `
+                    <div style="margin:15px 0; padding:15px; border:1px dashed #000; text-align:left; font-weight:bold; background: #f9f9f9;">
+                        <p style="margin-bottom:5px;">HOLDER: <span>${user.n}</span></p>
+                        <p style="margin-bottom:5px;">ACCESS: <span style="color:var(--gold)">${user.a}</span></p>
+                        <p style="margin-top:10px; color:green; text-align:center; font-size:1rem;">✔ VERIFIED PASS</p>
+                    </div>
+                `;
+            });
+            
+            ticketUI.innerHTML += `<button onclick="window.print()" class="btn-gold" style="margin-top:20px;">Download PDF</button>`;
+            ticketUI.innerHTML += `<button onclick="location.reload()" style="background:none; border:none; color:blue; text-decoration:underline; cursor:pointer; display:block; margin: 15px auto;">Back</button>`;
+        } else { 
+            alert("No verified tickets found."); 
+        }
+    }
+
+    document.getElementById('bookingForm').onsubmit = function(e) {
+        e.preventDefault();
+        users.push({ n: document.getElementById('uName').value, p: document.getElementById('uPhone').value, a: document.getElementById('uAct').value, v: false });
+        localStorage.setItem('irc_v2_users', JSON.stringify(users));
+        alert("Success! Check status in 'My Ticket' later.");
+        showPage('ticket-page');
+    };
+
+    window.onload = () => { refresh(); startCountdown(); };
+</script>
+</body>
+</html>
