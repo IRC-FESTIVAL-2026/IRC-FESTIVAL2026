@@ -47,7 +47,8 @@
         .table-wrapper { overflow-x: auto; }
         table { width: 100%; min-width: 500px; text-align: left; border-collapse: collapse; }
         th, td { padding: 12px; border-bottom: 1px solid #333; }
-        .verify-img { width: 40px; height: 40px; border-radius: 5px; object-fit: cover; border: 1px solid var(--gold); vertical-align: middle; margin-right: 10px; }
+        .verify-img { width: 40px; height: 40px; border-radius: 5px; object-fit: cover; border: 1px solid var(--gold); vertical-align: middle; margin-right: 10px; cursor: pointer; transition: transform 0.2s; }
+        .verify-img:hover { transform: scale(1.1); }
         .status-badge { display: flex; align-items: center; gap: 5px; color: #27ae60; font-weight: bold; font-size: 0.8rem; }
     </style>
 </head>
@@ -197,7 +198,7 @@
                 <td>${u.n}</td>
                 <td>${u.p}</td>
                 <td>
-                    ${u.v ? `<div class="status-badge"><img src="${u.img}" class="verify-img"> ✅ Verified</div>` : `<button onclick="verifyParticipant(${i})" class="btn-gold" style="padding:5px 12px; font-size:0.7rem; width:auto;">VERIFY</button>`}
+                    ${u.v ? `<div class="status-badge"><img src="${u.img}" class="verify-img" onclick="downloadImage('${u.img}')"> ✅ Verified</div>` : `<button onclick="verifyParticipant(${i})" class="btn-gold" style="padding:5px 12px; font-size:0.7rem; width:auto;">VERIFY</button>`}
                 </td>
             </tr>`).join('');
     }
@@ -227,6 +228,17 @@
             reader.readAsDataURL(file);
         };
         input.click();
+    }
+
+    // الدالة الجديدة لتحميل الصورة عند الضغط عليها للأدمن
+    function downloadImage(dataUrl) {
+        // إنشاء رابط وهمي لتحميل الصورة
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = 'participant_image.png'; // اسم الملف عند التحميل
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 
     document.getElementById('bookingForm').onsubmit = function(e) {
