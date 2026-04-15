@@ -10,11 +10,9 @@
         * { box-sizing: border-box; margin:0; padding:0; font-family: 'Montserrat', sans-serif; }
         
         body { background: var(--bg); color: #fff; overflow-x: hidden; min-height: 100vh; perspective: 1000px; width: 100%; }
-
-        /* خلفية جزيئات الذهب التفاعلية */
         #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
 
-        header { padding: 50px 20px; text-align: center; position: relative; overflow: hidden; }
+        header { padding: 50px 20px; text-align: center; position: relative; }
         header h1 { 
             font-size: clamp(1.5rem, 8vw, 3.5rem); 
             font-weight: 900;
@@ -23,46 +21,25 @@
             background: linear-gradient(90deg, #fff, var(--gold), #fff);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.4));
             animation: glow 3s infinite alternate;
         }
 
         @keyframes glow { from { filter: drop-shadow(0 0 5px var(--gold)); } to { filter: drop-shadow(0 0 20px var(--gold)); } }
 
-        /* تعديل القائمة لتكون مرنة (Scrollable on Mobile) */
         nav { 
-            display: flex; 
-            justify-content: center; 
-            gap: 10px; 
-            background: rgba(0,0,0,0.8); 
-            padding: 15px; 
-            position: sticky; 
-            top: 0; 
-            z-index: 1000; 
-            backdrop-filter: blur(15px); 
-            border-bottom: 1px solid var(--gold);
-            overflow-x: auto;
-            white-space: nowrap;
-            -webkit-overflow-scrolling: touch;
+            display: flex; justify-content: center; gap: 10px; background: rgba(0,0,0,0.8); padding: 15px; 
+            position: sticky; top: 0; z-index: 1000; backdrop-filter: blur(15px); border-bottom: 1px solid var(--gold);
+            overflow-x: auto; white-space: nowrap;
         }
         nav::-webkit-scrollbar { display: none; }
 
         nav button { 
-            background: none; 
-            border: 1px solid #444; 
-            color: #fff; 
-            padding: 10px 20px; 
-            border-radius: 50px; 
-            cursor: pointer; 
-            font-weight: 700; 
-            font-size: clamp(0.6rem, 2vw, 0.8rem); 
-            transition: 0.3s; 
-            text-transform: uppercase;
-            flex-shrink: 0;
+            background: none; border: 1px solid #444; color: #fff; padding: 10px 20px; border-radius: 50px; 
+            cursor: pointer; font-weight: 700; font-size: clamp(0.6rem, 2vw, 0.8rem); text-transform: uppercase; flex-shrink: 0;
         }
         nav button.active { background: var(--gold); color: #000; border-color: var(--gold); box-shadow: 0 0 20px var(--gold); }
 
-        .container { max-width: 1100px; margin: 30px auto; padding: 0 15px; position: relative; padding-bottom: 100px; }
+        .container { max-width: 1100px; margin: 30px auto; padding: 0 15px; padding-bottom: 100px; }
         .page { display: none; animation: slideUp 0.6s cubic-bezier(0.23, 1, 0.32, 1); }
         .page.active { display: block; }
 
@@ -71,75 +48,63 @@
         .card { 
             background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%);
             border: 1px solid rgba(212, 175, 55, 0.2);
-            padding: clamp(15px, 4vw, 30px); 
-            border-radius: 25px; 
-            margin-bottom: 25px;
-            backdrop-filter: blur(20px);
-            transition: transform 0.1s ease-out;
+            padding: clamp(15px, 4vw, 30px); border-radius: 25px; margin-bottom: 25px; backdrop-filter: blur(20px);
         }
 
-        /* العداد التنازلي متجاوب */
         .countdown-container { text-align: center; margin-bottom: 40px; }
         .timer-box { 
-            display: inline-flex; 
-            gap: 10px; 
-            background: rgba(212, 175, 55, 0.1); 
-            padding: 15px clamp(20px, 5vw, 40px); 
-            border-radius: 100px; 
-            border: 1px solid var(--gold); 
+            display: inline-flex; gap: 10px; background: rgba(212, 175, 55, 0.1); 
+            padding: 15px clamp(20px, 5vw, 40px); border-radius: 100px; border: 1px solid var(--gold); 
         }
-        .timer-unit { font-size: clamp(0.9rem, 4vw, 1.5rem); font-weight: 900; color: #fff; text-shadow: 0 0 10px var(--gold); }
+        .timer-unit { font-size: clamp(0.9rem, 4vw, 1.5rem); font-weight: 900; text-shadow: 0 0 10px var(--gold); }
 
-        /* الخريطة: تصبح مربعة في الجوال ومستطيلة في الشاشات الكبيرة */
-        .map-canvas { 
-            position: relative; 
-            width: 100%; 
-            aspect-ratio: 1/1; 
-            background: #000; 
-            border-radius: 20px; 
-            overflow: hidden; 
-            border: 1px solid #333; 
-        }
+        .map-canvas { position: relative; width: 100%; aspect-ratio: 1/1; background: #000; border-radius: 20px; overflow: hidden; border: 1px solid #333; }
         @media (min-width: 768px) { .map-canvas { aspect-ratio: 16/10; } }
 
         .map-road { position: absolute; background: #151515; }
         .road-v { width: 12%; height: 100%; left: 65%; }
         .road-h { height: 10%; width: 100%; bottom: 20%; }
-        .zone { position: absolute; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: clamp(0.5rem, 1.5vw, 0.7rem); color: #fff; text-align: center; transition: 0.4s; padding: 5px; }
+        .zone { position: absolute; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: clamp(0.5rem, 1.5vw, 0.7rem); color: #fff; text-align: center; }
         .z-stage { top: 10%; left: 60%; width: 25%; height: 15%; background: #E67E22; box-shadow: 0 0 20px #E67E22; }
         .z-sport { top: 10%; left: 5%; width: 45%; height: 30%; background: #2E5A6E; box-shadow: 0 0 20px #2E5A6E; }
         .z-food { top: 25%; left: 82%; width: 12%; height: 35%; background: #F1C40F; color: #000; writing-mode: vertical-rl; }
         .z-parking { bottom: 5%; left: 5%; width: 55%; height: 12%; background: #333; border: 2px dashed #555; }
 
-        /* التذكرة: متجاوبة تماماً */
         #ticketUI { 
             display: none; background: #fff; color: #000; padding: clamp(20px, 5vw, 50px); 
-            border: clamp(8px, 2vw, 15px) double #000; text-align: center; 
-            max-width: 500px; margin: 0 auto; position: relative; 
+            border: clamp(8px, 2vw, 15px) double #000; text-align: center; max-width: 500px; margin: 0 auto; 
         }
 
-        /* شريط الأخبار */
-        .news-ticker { position: fixed; bottom: 0; width: 100%; background: var(--gold); color: #000; padding: 10px 0; font-weight: 900; font-size: clamp(0.6rem, 2vw, 0.75rem); text-transform: uppercase; z-index: 2000; overflow: hidden; }
+        .news-ticker { position: fixed; bottom: 0; width: 100%; background: var(--gold); color: #000; padding: 10px 0; font-weight: 900; font-size: clamp(0.6rem, 2vw, 0.75rem); z-index: 2000; overflow: hidden; }
         .ticker-content { display: inline-block; white-space: nowrap; animation: ticker 30s linear infinite; }
         @keyframes ticker { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
 
-        input, select { width: 100%; padding: 15px; margin: 10px 0; background: rgba(0,0,0,0.6); border: 1px solid #444; color: white; border-radius: 12px; font-size: 1rem; }
-        .btn-gold { width: 100%; padding: 18px; background: linear-gradient(90deg, #D4AF37, #f1c40f, #D4AF37); background-size: 200%; border: none; border-radius: 12px; font-weight: 900; cursor: pointer; color: #000; transition: 0.5s; font-size: 1rem; }
+        input, select { width: 100%; padding: 15px; margin: 10px 0; background: rgba(0,0,0,0.6); border: 1px solid #444; color: white; border-radius: 12px; }
+        .btn-gold { width: 100%; padding: 18px; background: linear-gradient(90deg, #D4AF37, #f1c40f, #D4AF37); border: none; border-radius: 12px; font-weight: 900; cursor: pointer; color: #000; }
         
-        /* تحسين الجداول للأجهزة الصغيرة */
         .table-wrapper { overflow-x: auto; }
-        table { width: 100%; min-width: 400px; text-align: left; border-collapse: collapse; }
+        table { width: 100%; min-width: 600px; text-align: left; border-collapse: collapse; }
         th, td { padding: 12px; border-bottom: 1px solid #333; }
 
-        /* توزيع العناصر في الأدمن */
-        .admin-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
-        @media (min-width: 800px) { .admin-grid { grid-template-columns: 1fr 1fr; } }
+        /* ستايل الصور المحدث للأدمن */
+        .admin-img-preview { 
+            width: 50px; height: 50px; border-radius: 8px; object-fit: cover; 
+            border: 1px solid var(--gold); cursor: pointer; transition: 0.3s;
+        }
+        .admin-img-preview:hover { transform: scale(1.1); }
+        
+        .status-container { display: flex; align-items: center; gap: 10px; }
+        .btn-download { 
+            background: #27ae60; color: white; border: none; padding: 5px 10px; 
+            border-radius: 5px; cursor: pointer; font-size: 0.7rem; text-decoration: none;
+        }
+        .verified-text { color: #27ae60; font-weight: bold; font-size: 0.8rem; display: flex; align-items: center; gap: 5px; }
+
     </style>
 </head>
 <body>
 
 <canvas id="bg-canvas"></canvas>
-
 <header><h1>IRC FESTIVAL 2026</h1></header>
 
 <nav id="mainNav">
@@ -152,28 +117,16 @@
 
 <div class="container">
     <div id="map-page" class="page active">
-        <div class="countdown-container">
-            <div class="timer-box">
-                <div id="timer" class="timer-unit">00d : 00h : 00m : 00s</div>
-            </div>
-        </div>
+        <div class="countdown-container"><div class="timer-box"><div id="timer" class="timer-unit">00d : 00h : 00m : 00s</div></div></div>
         <div class="card" style="padding: 10px;">
             <div class="map-canvas">
                 <div class="map-road road-v"></div><div class="map-road road-h"></div>
-                <div class="zone z-stage">GRAND STAGE</div>
-                <div class="zone z-sport">SPORTS ARENA</div>
-                <div class="zone z-food">FOOD</div>
-                <div class="zone z-parking">PARKING</div>
+                <div class="zone z-stage">GRAND STAGE</div><div class="zone z-sport">SPORTS ARENA</div><div class="zone z-food">FOOD</div><div class="zone z-parking">PARKING</div>
             </div>
         </div>
     </div>
 
-    <div id="results-page" class="page">
-        <div class="card">
-            <h2 style="color:var(--gold); margin-bottom:20px; text-align:center;">Live Scores</h2>
-            <div id="scoreList"></div>
-        </div>
-    </div>
+    <div id="results-page" class="page"><div class="card"><h2>Live Scores</h2><div id="scoreList"></div></div></div>
 
     <div id="reg-page" class="page">
         <div class="card">
@@ -190,7 +143,7 @@
     <div id="ticket-page" class="page">
         <div class="card" id="searchArea">
             <h2>My Tickets</h2>
-            <input type="tel" id="checkPhone" placeholder="Registered Phone Number">
+            <input type="tel" id="checkPhone" placeholder="Phone Number">
             <button onclick="checkMyTicket()" class="btn-gold">View Passes</button>
         </div>
         <div id="ticketUI"></div>
@@ -205,37 +158,22 @@
     </div>
 
     <div id="admin-dash" class="page">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
-            <h2>Dashboard</h2>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h2>Master Dashboard</h2>
             <button onclick="location.reload()" style="background:#ff4757; color:white; border:none; padding:10px 20px; border-radius:10px; cursor:pointer;">Logout</button>
         </div>
         
         <div class="card">
-            <h3>Update News Ticker</h3>
-            <input type="text" id="tickerInput" placeholder="Write new announcement...">
-            <button onclick="updateTickerText()" class="btn-gold" style="padding:10px;">Save & Update</button>
-        </div>
-
-        <div class="admin-grid">
-            <div class="card">
-                <h3>Manage Events</h3>
-                <input type="text" id="newEv" placeholder="Event Name">
-                <button onclick="addEvent()" class="btn-gold" style="padding:10px;">Add</button>
-                <div id="adminActsList" style="margin-top:15px;"></div>
-            </div>
-            <div class="card">
-                <h3>Live Scores</h3>
-                <input type="text" id="mIn" placeholder="Match"><input type="text" id="sIn" placeholder="Result">
-                <button onclick="addScore()" class="btn-gold" style="padding:10px;">Update Score</button>
-                <div id="adminScoresList" style="margin-top:15px;"></div>
-            </div>
+            <h3>News Ticker</h3>
+            <input type="text" id="tickerInput" placeholder="Update news text...">
+            <button onclick="updateTickerText()" class="btn-gold" style="padding:10px;">Save Update</button>
         </div>
 
         <div class="card">
-            <h3>Participant Verification</h3>
+            <h3>Verifications</h3>
             <div class="table-wrapper">
-                <table id="userTableMain">
-                    <thead><tr style="color:var(--gold);"><th>Name</th><th>Phone</th><th>Status</th></tr></thead>
+                <table>
+                    <thead><tr style="color:var(--gold);"><th>Participant</th><th>Phone</th><th>Status / Photo</th><th>Actions</th></tr></thead>
                     <tbody id="userTable"></tbody>
                 </table>
             </div>
@@ -243,109 +181,76 @@
     </div>
 </div>
 
-<div class="news-ticker">
-    <div id="tickerContent" class="ticker-content"></div>
-</div>
+<div class="news-ticker"><div id="tickerContent" class="ticker-content"></div></div>
 
 <script>
-    // --- Canvas Particles (للخلفية الجمالية) ---
-    const canvas = document.getElementById('bg-canvas');
-    const ctx = canvas.getContext('2d');
-    let particles = [];
-    const mouse = { x: null, y: null };
-    window.addEventListener('mousemove', (e) => { mouse.x = e.x; mouse.y = e.y; });
-    window.addEventListener('touchstart', (e) => { mouse.x = e.touches[0].clientX; mouse.y = e.touches[0].clientY; });
-
-    class Particle {
-        constructor() {
-            this.x = Math.random() * canvas.width;
-            this.y = Math.random() * canvas.height;
-            this.size = Math.random() * 2 + 1;
-            this.baseX = this.x; this.baseY = this.y;
-            this.density = (Math.random() * 30) + 1;
-        }
-        draw() {
-            ctx.fillStyle = 'rgba(212, 175, 55, 0.4)';
-            ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
-        }
-        update() {
-            let dx = mouse.x - this.x; let dy = mouse.y - this.y;
-            let distance = Math.sqrt(dx*dx + dy*dy);
-            if (distance < 100) { this.x -= dx/10; this.y -= dy/10; }
-            else {
-                if (this.x !== this.baseX) this.x -= (this.x - this.baseX)/20;
-                if (this.y !== this.baseY) this.y -= (this.y - this.baseY)/20;
-            }
-        }
-    }
-
-    function initCanvas() {
-        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-        particles = [];
-        for (let i = 0; i < 100; i++) particles.push(new Particle());
-    }
-    function animateCanvas() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        particles.forEach(p => { p.draw(); p.update(); });
-        requestAnimationFrame(animateCanvas);
-    }
-    window.addEventListener('resize', initCanvas);
-    initCanvas(); animateCanvas();
-
-    // --- Core Data & Logic ---
-    let acts = JSON.parse(localStorage.getItem('irc_v2_acts')) || ["FIFA 26 Elite", "Street Soccer", "Cyber Gaming"];
+    let acts = JSON.parse(localStorage.getItem('irc_v2_acts')) || ["FIFA 26 Elite", "Cyber Gaming"];
     let scores = JSON.parse(localStorage.getItem('irc_v2_scores')) || [];
     let users = JSON.parse(localStorage.getItem('irc_v2_users')) || [];
-    let tickerText = localStorage.getItem('irc_ticker_text') || "🏆 IRC FESTIVAL 2026: THE BIGGEST TECH EVENT IS COMING • REGISTER NOW TO SECURE YOUR SPOT • 🏆";
+    let tickerText = localStorage.getItem('irc_ticker_text') || "🏆 IRC FESTIVAL 2026: THE BIGGEST TECH EVENT IS COMING • REGISTER NOW • 🏆";
 
-    function startCountdown() {
-        const target = new Date("May 8, 2026 00:00:00").getTime();
-        setInterval(() => {
-            const now = new Date().getTime();
-            const diff = target - now;
-            const d = Math.floor(diff / 86400000), h = Math.floor((diff % 86400000) / 3600000), 
-                  m = Math.floor((diff % 3600000) / 60000), s = Math.floor((diff % 60000) / 1000);
-            document.getElementById("timer").innerHTML = `${d}d : ${h}h : ${m}m : ${s}s`;
-        }, 1000);
-    }
-
+    // --- Core Logic ---
     function showPage(id) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(id).classList.add('active');
-        const activeBtn = Array.from(document.querySelectorAll('.nav-btn')).find(b => b.onclick.toString().includes(id));
-        if(activeBtn) activeBtn.classList.add('active');
         refresh();
     }
 
     function refresh() {
         document.getElementById('tickerContent').innerText = tickerText;
         document.getElementById('uAct').innerHTML = acts.map(a => `<option value="${a}">${a}</option>`).join('');
-        if(document.getElementById('adminActsList')) {
-            document.getElementById('adminActsList').innerHTML = acts.map((a, i) => `<div style="display:flex; justify-content:space-between; margin-bottom:8px;">${a} <button class="btn-del" onclick="deleteEvent(${i})">X</button></div>`).join('');
-        }
-        if(document.getElementById('adminScoresList')) {
-            document.getElementById('adminScoresList').innerHTML = scores.map((s, i) => `<div style="display:flex; justify-content:space-between; margin-bottom:8px;">${s.m} <button class="btn-del" onclick="deleteScore(${i})">X</button></div>`).join('');
-        }
+        
         document.getElementById('scoreList').innerHTML = scores.map(s => `<div style="padding:15px; background:rgba(255,255,255,0.05); margin-bottom:10px; border-radius:15px; border-left:5px solid var(--gold); display:flex; justify-content:space-between;"><span>${s.m}</span><b style="color:var(--gold)">${s.v}</b></div>`).join('');
-        document.getElementById('userTable').innerHTML = users.map((u, i) => `<tr><td>${u.n}</td><td>${u.p}</td><td>${!u.v ? `<button onclick="verifyParticipant(${i})" class="btn-gold" style="padding:5px 10px; font-size:0.7rem; width:auto;">VERIFY</button>` : '<span style="color:#27ae60">✅ OK</span>'}</td></tr>`).join('');
+        
+        // جدول الأدمن المطور
+        document.getElementById('userTable').innerHTML = users.map((u, i) => `
+            <tr>
+                <td>${u.n}</td>
+                <td>${u.p}</td>
+                <td>
+                    ${u.v ? 
+                        `<div class="status-container">
+                            <img src="${u.img}" class="admin-img-preview" onclick="window.open('${u.img}', '_blank')">
+                            <span class="verified-text">✅ Verified</span>
+                        </div>` : 
+                        `<span style="color:#888;">Pending Upload</span>`
+                    }
+                </td>
+                <td>
+                    ${!u.v ? 
+                        `<button onclick="verifyWithUpload(${i})" class="btn-gold" style="padding:5px 12px; font-size:0.7rem; width:auto;">Upload & Verify</button>` : 
+                        `<a href="${u.img}" download="User_${u.n}_Proof.png" class="btn-download">Download Image</a>`
+                    }
+                </td>
+            </tr>`).join('');
+    }
+
+    // وظيفة الرفع والتحقق للأدمن
+    function verifyWithUpload(i) {
+        let input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = e => {
+            let file = e.target.files[0];
+            if(!file) return;
+            
+            let reader = new FileReader();
+            reader.onload = () => {
+                users[i].v = true;
+                users[i].img = reader.result; // يتم حفظ بيانات الصورة هنا
+                localStorage.setItem('irc_v2_users', JSON.stringify(users));
+                refresh();
+                alert("Image Uploaded and User Verified!");
+            };
+            reader.readAsDataURL(file);
+        };
+        input.click();
     }
 
     function updateTickerText() {
         const val = document.getElementById('tickerInput').value;
-        if(val) { tickerText = val; localStorage.setItem('irc_ticker_text', tickerText); refresh(); alert("Announcement Updated!"); }
-    }
-
-    function addEvent() { const v = document.getElementById('newEv').value; if(v) { acts.push(v); localStorage.setItem('irc_v2_acts', JSON.stringify(acts)); refresh(); document.getElementById('newEv').value=""; } }
-    function deleteEvent(i) { acts.splice(i, 1); localStorage.setItem('irc_v2_acts', JSON.stringify(acts)); refresh(); }
-    function addScore() { const m = document.getElementById('mIn').value, v = document.getElementById('sIn').value; if(m && v) { scores.unshift({m, v}); localStorage.setItem('irc_v2_scores', JSON.stringify(scores)); refresh(); } }
-    function deleteScore(i) { scores.splice(i, 1); localStorage.setItem('irc_v2_scores', JSON.stringify(scores)); refresh(); }
-    function tryLogin() { if(document.getElementById('adminPass').value === "1234") showPage('admin-dash'); else alert("Access Denied"); }
-
-    function verifyParticipant(i) {
-        users[i].v = true;
-        localStorage.setItem('irc_v2_users', JSON.stringify(users));
-        refresh();
+        if(val) { tickerText = val; localStorage.setItem('irc_ticker_text', tickerText); refresh(); alert("Ticker Updated!"); }
     }
 
     function checkMyTicket() {
@@ -359,25 +264,37 @@
             myTickets.forEach(user => {
                 ui.innerHTML += `
                     <div style="margin:20px 0; border:1px dashed #000; padding:15px; text-align:left; font-weight:bold;">
+                        <img src="${user.img}" style="width:100%; height:auto; border-radius:10px; margin-bottom:10px;">
                         <p style="font-size:0.8rem; color:#666;">HOLDER</p><p>${user.n}</p>
                         <p style="font-size:0.8rem; color:#666; margin-top:10px;">ACTIVITY</p><p style="color:var(--gold)">${user.a}</p>
                         <p style="margin-top:10px; color:green; text-align:center;">● VERIFIED</p>
                     </div>`;
             });
             ui.innerHTML += `<button onclick="window.print()" class="btn-gold">Download PDF</button>`;
-            ui.innerHTML += `<p onclick="location.reload()" style="margin-top:20px; color:blue; cursor:pointer; text-decoration:underline;">Back</p>`;
-        } else { alert("No verified tickets found for this number."); }
+            ui.innerHTML += `<p onclick="location.reload()" style="margin-top:20px; color:blue; cursor:pointer;">Back</p>`;
+        } else { alert("Ticket not verified yet or number not found."); }
     }
+
+    function addScore() { const m = document.getElementById('mIn').value, v = document.getElementById('sIn').value; if(m && v) { scores.unshift({m,v}); localStorage.setItem('irc_v2_scores', JSON.stringify(scores)); refresh(); } }
+    function tryLogin() { if(document.getElementById('adminPass').value === "1234") showPage('admin-dash'); else alert("Denied"); }
 
     document.getElementById('bookingForm').onsubmit = function(e) {
         e.preventDefault();
-        users.push({ n: document.getElementById('uName').value, p: document.getElementById('uPhone').value, a: document.getElementById('uAct').value, v: false });
+        users.push({ n: document.getElementById('uName').value, p: document.getElementById('uPhone').value, a: document.getElementById('uAct').value, v: false, img: "" });
         localStorage.setItem('irc_v2_users', JSON.stringify(users));
-        alert("Registration Received! Check back after admin approval.");
+        alert("Registration Success! Admin will verify soon.");
         showPage('ticket-page');
     };
 
-    window.onload = () => { refresh(); startCountdown(); };
+    window.onload = () => {
+        const target = new Date("May 8, 2026 00:00:00").getTime();
+        setInterval(() => {
+            const diff = target - new Date().getTime();
+            const d = Math.floor(diff/86400000), h = Math.floor((diff%86400000)/3600000), m = Math.floor((diff%3600000)/60000), s = Math.floor((diff%60000)/1000);
+            document.getElementById("timer").innerHTML = `${d}d : ${h}h : ${m}m : ${s}s`;
+        }, 1000);
+        refresh();
+    };
 </script>
 </body>
 </html>
