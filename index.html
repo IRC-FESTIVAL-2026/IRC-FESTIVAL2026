@@ -86,7 +86,6 @@
         table { width: 100%; min-width: 500px; text-align: left; border-collapse: collapse; }
         th, td { padding: 12px; border-bottom: 1px solid #333; }
 
-        /* ستايل صورة التحقق */
         .verify-img { width: 40px; height: 40px; border-radius: 5px; object-fit: cover; border: 1px solid var(--gold); vertical-align: middle; margin-right: 10px; }
         .status-badge { display: flex; align-items: center; gap: 5px; color: #27ae60; font-weight: bold; font-size: 0.8rem; }
     </style>
@@ -231,7 +230,11 @@
         
         document.getElementById('scoreList').innerHTML = scores.map(s => `<div style="padding:15px; background:rgba(255,255,255,0.05); margin-bottom:10px; border-radius:15px; border-left:5px solid var(--gold); display:flex; justify-content:space-between;"><span>${s.m}</span><b style="color:var(--gold)">${s.v}</b></div>`).join('');
         
-        // تحديث جدول الأدمن لعرض الصورة والصح الأخضر
+        // تعديل لعرض قائمة النتائج مع زر حذف في لوحة الأدمن
+        if(document.getElementById('adminScoresList')) {
+            document.getElementById('adminScoresList').innerHTML = scores.map((s, i) => `<div style="display:flex; justify-content:space-between; margin-bottom:5px; background:rgba(255,255,255,0.05); padding:5px; border-radius:5px;"><span>${s.m}</span><button onclick="deleteScore(${i})" style="color:red; background:none; border:none; cursor:pointer;">X</button></div>`).join('');
+        }
+
         document.getElementById('userTable').innerHTML = users.map((u, i) => `
             <tr>
                 <td>${u.n}</td>
@@ -245,7 +248,6 @@
             </tr>`).join('');
     }
 
-    // وظيفة الرفع والتحقق للأدمن
     function verifyParticipant(i) {
         let input = document.createElement('input');
         input.type = 'file';
@@ -255,7 +257,7 @@
             let reader = new FileReader();
             reader.onload = () => {
                 users[i].v = true;
-                users[i].img = reader.result; // تخزين الصورة
+                users[i].img = reader.result; 
                 localStorage.setItem('irc_v2_users', JSON.stringify(users));
                 refresh();
             };
@@ -293,7 +295,18 @@
 
     function addEvent() { const v = document.getElementById('newEv').value; if(v) { acts.push(v); localStorage.setItem('irc_v2_acts', JSON.stringify(acts)); refresh(); document.getElementById('newEv').value=""; } }
     function deleteEvent(i) { acts.splice(i,1); localStorage.setItem('irc_v2_acts', JSON.stringify(acts)); refresh(); }
-    function addScore() { const m = document.getElementById('mIn').value, v = document.getElementById('sIn').value; if(m && v) { scores.unshift({m,v}); localStorage.setItem('irc_v2_scores', JSON.stringify(scores)); refresh(); } }
+    
+    function addScore() { const m = document.getElementById('mIn').value, v = document.getElementById('sIn').value; if(m && v) { scores.unshift({m,v}); localStorage.setItem('irc_v2_scores', JSON.stringify(scores)); refresh(); document.getElementById('mIn').value=""; document.getElementById('sIn').value=""; } }
+    
+    // الدالة الجديدة لحذف السكور
+    function deleteScore(i) {
+        if(confirm("Delete this score?")) {
+            scores.splice(i, 1);
+            localStorage.setItem('irc_v2_scores', JSON.stringify(scores));
+            refresh();
+        }
+    }
+
     function tryLogin() { if(document.getElementById('adminPass').value === "1234") showPage('admin-dash'); else alert("Denied"); }
 
     document.getElementById('bookingForm').onsubmit = function(e) {
