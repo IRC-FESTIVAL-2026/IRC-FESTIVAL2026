@@ -49,6 +49,8 @@
         th, td { padding: 12px; border-bottom: 1px solid #333; }
         .verify-img { width: 40px; height: 40px; border-radius: 5px; object-fit: cover; border: 1px solid var(--gold); vertical-align: middle; margin-right: 10px; cursor: pointer; }
         .status-badge { display: flex; align-items: center; gap: 5px; color: #27ae60; font-weight: bold; font-size: 0.8rem; }
+        .score-category { margin-bottom: 25px; border-bottom: 1px solid rgba(212, 175, 55, 0.3); padding-bottom: 10px; }
+        .score-category h3 { color: var(--gold); margin-bottom: 10px; text-transform: uppercase; font-size: 1rem; letter-spacing: 1px; }
     </style>
 </head>
 <body>
@@ -58,7 +60,7 @@
 
 <nav id="mainNav">
     <button onclick="showPage('map-page')" class="nav-btn active">Live Map</button>
-    <button onclick="showPage('results-page')" class="nav-btn">Live score </button>
+    <button onclick="showPage('results-page')" class="nav-btn">Live score</button>
     <button onclick="showPage('reg-page')" class="nav-btn">Book Now</button>
     <button onclick="showPage('ticket-page')" class="nav-btn">My Ticket</button>
     <button onclick="showPage('admin-login')" class="nav-btn">Admin</button>
@@ -75,7 +77,12 @@
         </div>
     </div>
 
-    <div id="results-page" class="page"><div class="card"><h2>Live Scores</h2><div id="scoreList"></div></div></div>
+    <div id="results-page" class="page">
+        <div class="card">
+            <h2>Live Scores</h2>
+            <div id="scoreList"></div>
+        </div>
+    </div>
 
     <div id="reg-page" class="page">
         <div class="card">
@@ -127,7 +134,14 @@
             </div>
             <div class="card">
                 <h3>Scores</h3>
-                <input type="text" id="mIn" placeholder="Match"><input type="text" id="sIn" placeholder="Result">
+                <select id="mCat">
+                    <option value="STREET SOCCER">STREET SOCCER</option>
+                    <option value="FIFA">FIFA</option>
+                    <option value="PINGPONG">PINGPONG</option>
+                    <option value="DODGEBALL">DODGEBALL</option>
+                </select>
+                <input type="text" id="mIn" placeholder="Match (e.g. Team A vs Team B)">
+                <input type="text" id="sIn" placeholder="Result (e.g. 2 - 1)">
                 <button onclick="addScore()" class="btn-gold" style="padding:10px;">Update</button>
                 <div id="adminScoresList" style="margin-top:10px;"></div>
             </div>
@@ -137,7 +151,7 @@
             <h3>Verifications</h3>
             <div class="table-wrapper">
                 <table>
-                    <thead><tr style="color:var(--gold);"><th>Participant</th><th>Phone</th><th>Status / Photo</th></tr></thead>
+                    <thead><tr style="color:var(--gold);"><th>Participant</th><th>Phone</th><th>Actions</th></tr></thead>
                     <tbody id="userTable"></tbody>
                 </table>
             </div>
@@ -163,51 +177,73 @@
 
     let acts = [], scores = [], users = [], tickerText = "";
 
+    // جلب البيانات مع تعطيل المنطق التلقائي الذي يعيد القيم المحذوفة
     db.ref('/').on('value', (snapshot) => {
         const data = snapshot.val() || {};
-        acts = data.acts || ["FIFA 26 Elite", "Cyber Gaming"];
+        acts = data.acts || [];
         scores = data.scores || [];
         users = data.users || [];
         tickerText = data.ticker || "🏆 IRC FESTIVAL 2026: THE BIGGEST TECH EVENT IS COMING 🏆";
         refreshUI();
-        restartTicker(); // إعادة تشغيل الشريط عند تحديث البيانات
+        restartTicker();
     });
 
-    function sync() { db.ref('/').set({ acts, scores, users, ticker: tickerText }); }
+    function sync() {
+        // نرسل المصفوفات كما هي، حتى لو كانت فارغة
+        db.ref('/').update({ 
+            acts: acts, 
+            scores: scores, 
+            users: users, 
+            ticker: tickerText 
+        });
+    }
 
     function refreshUI() {
         document.getElementById('tickerContent').innerText = tickerText;
         document.getElementById('uAct').innerHTML = acts.map(a => `<option value="${a}">${a}</option>`).join('');
         
         if(document.getElementById('adminActsList')) {
-            document.getElementById('adminActsList').innerHTML = acts.map((a, i) => `<div style="display:flex; justify-content:space-between; margin-bottom:5px;">${a} <button onclick="deleteEvent(${i})" style="color:red; background:none; border:none; cursor:pointer;">X</button></div>`).join('');
+            document.getElementById('adminActsList').innerHTML = acts.map((a, i) => 
+                `<div style="display:flex; justify-content:space-between; margin-bottom:5px;">${a} <button onclick="deleteEvent(${i})" style="color:red; background:none; border:none; cursor:pointer; font-weight:bold;">X</button></div>`).join('');
         }
         
-        document.getElementById('scoreList').innerHTML = scores.map(s => `<div style="padding:15px; background:rgba(255,255,255,0.05); margin-bottom:10px; border-radius:15px; border-left:5px solid var(--gold); display:flex; justify-content:space-between;"><span>${s.m}</span><b style="color:var(--gold)">${s.v}</b></div>`).join('');
+        const categories = ["STREET SOCCER", "FIFA", "PINGPONG", "DODGEBALL"];
+        let scoreHTML = "";
+        categories.forEach(cat => {
+            const filtered = scores.filter(s => s.cat === cat);
+            scoreHTML += `<div class="score-category"><h3>${cat}</h3>`;
+            if(filtered.length === 0) scoreHTML += `<p style="font-size:0.8rem; opacity:0.5;">No matches yet</p>`;
+            else {
+                scoreHTML += filtered.map(s => `<div style="padding:15px; background:rgba(255,255,255,0.05); margin-bottom:10px; border-radius:15px; border-left:5px solid var(--gold); display:flex; justify-content:space-between;"><span>${s.m}</span><b style="color:var(--gold)">${s.v}</b></div>`).join('');
+            }
+            scoreHTML += `</div>`;
+        });
+        document.getElementById('scoreList').innerHTML = scoreHTML;
         
         if(document.getElementById('adminScoresList')) {
-            document.getElementById('adminScoresList').innerHTML = scores.map((s, i) => `<div style="display:flex; justify-content:space-between; margin-bottom:5px; background:rgba(255,255,255,0.05); padding:5px; border-radius:5px;"><span>${s.m}: ${s.v}</span><button onclick="deleteScore(${i})" style="color:red; background:none; border:none; cursor:pointer;">X</button></div>`).join('');
+            document.getElementById('adminScoresList').innerHTML = scores.map((s, i) => `<div style="display:flex; justify-content:space-between; margin-bottom:5px; background:rgba(255,255,255,0.05); padding:5px; border-radius:5px;"><span>[${s.cat}] ${s.m}: ${s.v}</span><button onclick="deleteScore(${i})" style="color:red; background:none; border:none; cursor:pointer;">X</button></div>`).join('');
         }
 
         document.getElementById('userTable').innerHTML = users.map((u, i) => `
             <tr>
-                <td>${u.n}</td>
+                <td>${u.n} <br><small style="color:#888">${u.a || ''}</small></td>
                 <td>${u.p}</td>
-                <td>
-                    ${u.v ? `<div class="status-badge"><img src="${u.img}" class="verify-img" onclick="downloadImage('${u.img}', '${u.n}')"> ✅ Verified</div>` : `<button onclick="verifyParticipant(${i})" class="btn-gold" style="padding:5px 12px; font-size:0.7rem; width:auto;">VERIFY</button>`}
+                <td style="display:flex; align-items:center; gap:10px;">
+                    <button onclick="deleteUser(${i})" style="background:red; color:white; border:none; padding:5px 8px; border-radius:5px; cursor:pointer; font-weight:bold;">X</button>
+                    ${u.v ? `<div class="status-badge"><img src="${u.img}" class="verify-img" onclick="downloadImage('${u.img}', '${u.n}')"> ✅</div>` : `<button onclick="verifyParticipant(${i})" class="btn-gold" style="padding:5px 12px; font-size:0.7rem; width:auto;">VERIFY</button>`}
                 </td>
             </tr>`).join('');
     }
 
-    // إصلاح مشكلة حركة شريط الأخبار
     function restartTicker() {
         const ticker = document.getElementById('tickerContent');
-        ticker.style.animation = 'none';
-        ticker.offsetHeight; 
-        ticker.style.animation = 'ticker 30s linear infinite';
+        if(ticker) {
+            ticker.style.animation = 'none';
+            ticker.offsetHeight; 
+            ticker.style.animation = 'ticker 30s linear infinite';
+        }
     }
 
-    // إصلاح مشكلة تحميل الصورة (تعمل على الجوال واللابتوب)
     function downloadImage(dataUrl, userName) {
         const link = document.createElement('a');
         link.href = dataUrl;
@@ -218,12 +254,17 @@
     }
 
     function addScore() {
+        const cat = document.getElementById('mCat').value;
         const m = document.getElementById('mIn').value, v = document.getElementById('sIn').value;
-        if(m && v) { scores.unshift({m, v}); sync(); document.getElementById('mIn').value = ""; document.getElementById('sIn').value = ""; }
+        if(m && v) { scores.unshift({cat, m, v}); sync(); document.getElementById('mIn').value = ""; document.getElementById('sIn').value = ""; }
     }
-    function deleteScore(i) { if(confirm("Delete?")) { scores.splice(i, 1); sync(); } }
+    function deleteScore(i) { if(confirm("Delete result?")) { scores.splice(i, 1); sync(); } }
+    
     function addEvent() { const v = document.getElementById('newEv').value; if(v) { acts.push(v); sync(); document.getElementById('newEv').value=""; } }
-    function deleteEvent(i) { acts.splice(i,1); sync(); }
+    function deleteEvent(i) { if(confirm("Delete this event?")) { acts.splice(i,1); sync(); } }
+
+    function deleteUser(i) { if(confirm("Delete participant forever?")) { users.splice(i, 1); sync(); } }
+    
     function updateTickerText() { const val = document.getElementById('tickerInput').value; if(val) { tickerText = val; sync(); alert("Updated!"); } }
 
     function verifyParticipant(i) {
@@ -270,6 +311,8 @@
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(id).classList.add('active');
+        const btn = Array.from(document.querySelectorAll('.nav-btn')).find(b => b.getAttribute('onclick').includes(id));
+        if(btn) btn.classList.add('active');
     }
 
     function tryLogin() { if(document.getElementById('adminPass').value === "IRCOC12") showPage('admin-dash'); else alert("Denied"); }
@@ -298,7 +341,8 @@
         setInterval(() => {
             const diff = target - new Date().getTime();
             const d = Math.floor(diff/86400000), h = Math.floor((diff%86400000)/3600000), m = Math.floor((diff%3600000)/60000), s = Math.floor((diff%60000)/1000);
-            document.getElementById("timer").innerHTML = `${d}d : ${h}h : ${m}m : ${s}s`;
+            const timerEl = document.getElementById("timer");
+            if(timerEl) timerEl.innerHTML = `${d}d : ${h}h : ${m}m : ${s}s`;
         }, 1000);
     };
 </script>
