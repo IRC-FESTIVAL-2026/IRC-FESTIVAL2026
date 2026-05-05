@@ -25,6 +25,13 @@
         .page.active { display: block; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
         .card { background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%); border: 1px solid rgba(212, 175, 55, 0.2); padding: clamp(15px, 4vw, 30px); border-radius: 25px; margin-bottom: 25px; backdrop-filter: blur(20px); }
+        
+        .payment-info { background: rgba(212, 175, 55, 0.1); border: 1px dashed var(--gold); padding: 15px; border-radius: 15px; margin-bottom: 20px; text-align: center; }
+        .payment-info p { margin: 5px 0; font-size: 0.9rem; }
+        
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; justify-content: center; align-items: center; cursor: zoom-out; }
+        .modal-overlay img { max-width: 90%; max-height: 90%; border: 2px solid var(--gold); border-radius: 10px; }
+        
         .countdown-container { text-align: center; margin-bottom: 40px; }
         .timer-box { display: inline-flex; gap: 10px; background: rgba(212, 175, 55, 0.1); padding: 15px clamp(20px, 5vw, 40px); border-radius: 100px; border: 1px solid var(--gold); }
         .timer-unit { font-size: clamp(0.9rem, 4vw, 1.5rem); font-weight: 900; text-shadow: 0 0 10px var(--gold); }
@@ -47,13 +54,20 @@
         .table-wrapper { overflow-x: auto; }
         table { width: 100%; min-width: 500px; text-align: left; border-collapse: collapse; }
         th, td { padding: 12px; border-bottom: 1px solid #333; }
-        .verify-img { width: 40px; height: 40px; border-radius: 5px; object-fit: cover; border: 1px solid var(--gold); vertical-align: middle; margin-right: 10px; cursor: pointer; }
-        .status-badge { display: flex; align-items: center; gap: 5px; color: #27ae60; font-weight: bold; font-size: 0.8rem; }
+        .verify-img { width: 45px; height: 45px; border-radius: 5px; object-fit: cover; border: 1px solid var(--gold); cursor: pointer; }
+        
+        .passport-msg { background: #fff9c4; border: 2px solid #fbc02d; color: #d32f2f; padding: 12px; margin: 15px 0; border-radius: 10px; font-size: 0.9rem; font-weight: 900; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
+
         .score-category { margin-bottom: 25px; border-bottom: 1px solid rgba(212, 175, 55, 0.3); padding-bottom: 10px; }
         .score-category h3 { color: var(--gold); margin-bottom: 10px; text-transform: uppercase; font-size: 1rem; letter-spacing: 1px; }
     </style>
 </head>
 <body>
+
+<div id="imageModal" class="modal-overlay" onclick="this.style.display='none'">
+    <img id="modalImg" src="">
+</div>
 
 <canvas id="bg-canvas"></canvas>
 <header><h1>IRC FESTIVAL 2026</h1></header>
@@ -87,11 +101,18 @@
     <div id="reg-page" class="page">
         <div class="card">
             <h2>Registration</h2>
+            <div class="payment-info">
+                <p><strong>Bank Transfer Details</strong></p>
+                <p>Account: <span style="color:var(--gold)">110011000721</span></p>
+                <p>Reference (REF): <span style="color:var(--gold)">IRCNR</span></p>
+            </div>
             <form id="bookingForm">
                 <input type="text" id="uName" placeholder="Full Name" required>
                 <input type="tel" id="uPhone" placeholder="Mobile Number" required>
                 <select id="uAct" required></select>
-                <button type="submit" class="btn-gold">Confirm Booking</button>
+                <label style="display:block; margin-top:10px; font-size:0.8rem; color:var(--gold)">Upload Payment Receipt:</label>
+                <input type="file" id="uReceipt" accept="image/*" required>
+                <button type="submit" class="btn-gold" style="margin-top:15px;">Confirm Booking</button>
             </form>
         </div>
     </div>
@@ -151,7 +172,7 @@
             <h3>Verifications</h3>
             <div class="table-wrapper">
                 <table>
-                    <thead><tr style="color:var(--gold);"><th>Participant</th><th>Phone</th><th>Actions</th></tr></thead>
+                    <thead><tr style="color:var(--gold);"><th>Participant</th><th>Receipt</th><th>Actions</th></tr></thead>
                     <tbody id="userTable"></tbody>
                 </table>
             </div>
@@ -177,25 +198,18 @@
 
     let acts = [], scores = [], users = [], tickerText = "";
 
-    // جلب البيانات مع تعطيل المنطق التلقائي الذي يعيد القيم المحذوفة
     db.ref('/').on('value', (snapshot) => {
         const data = snapshot.val() || {};
         acts = data.acts || [];
         scores = data.scores || [];
         users = data.users || [];
-        tickerText = data.ticker || "🏆 IRC FESTIVAL 2026: THE BIGGEST TECH EVENT IS COMING 🏆";
+        tickerText = data.ticker || "🏆 IRC FESTIVAL 2026 🏆";
         refreshUI();
         restartTicker();
     });
 
     function sync() {
-        // نرسل المصفوفات كما هي، حتى لو كانت فارغة
-        db.ref('/').update({ 
-            acts: acts, 
-            scores: scores, 
-            users: users, 
-            ticker: tickerText 
-        });
+        db.ref('/').update({ acts, scores, users, ticker: tickerText });
     }
 
     function refreshUI() {
@@ -224,68 +238,63 @@
             document.getElementById('adminScoresList').innerHTML = scores.map((s, i) => `<div style="display:flex; justify-content:space-between; margin-bottom:5px; background:rgba(255,255,255,0.05); padding:5px; border-radius:5px;"><span>[${s.cat}] ${s.m}: ${s.v}</span><button onclick="deleteScore(${i})" style="color:red; background:none; border:none; cursor:pointer;">X</button></div>`).join('');
         }
 
-        document.getElementById('userTable').innerHTML = users.map((u, i) => `
-            <tr>
-                <td>${u.n} <br><small style="color:#888">${u.a || ''}</small></td>
-                <td>${u.p}</td>
-                <td style="display:flex; align-items:center; gap:10px;">
-                    <button onclick="deleteUser(${i})" style="background:red; color:white; border:none; padding:5px 8px; border-radius:5px; cursor:pointer; font-weight:bold;">X</button>
-                    ${u.v ? `<div class="status-badge"><img src="${u.img}" class="verify-img" onclick="downloadImage('${u.img}', '${u.n}')"> ✅</div>` : `<button onclick="verifyParticipant(${i})" class="btn-gold" style="padding:5px 12px; font-size:0.7rem; width:auto;">VERIFY</button>`}
-                </td>
-            </tr>`).join('');
+        const userTable = document.getElementById('userTable');
+        if(userTable) {
+            userTable.innerHTML = users.map((u, i) => `
+                <tr>
+                    <td>${u.n}<br><small style="color:#888">${u.a}</small><br><small>${u.p}</small></td>
+                    <td><img src="${u.img}" class="verify-img" onclick="viewImage('${u.img}')"></td>
+                    <td>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            ${u.v ? `<span style="color:#27ae60; font-size:0.7rem; font-weight:bold;">✅ APPROVED</span>` : 
+                            `<button onclick="approveUser(${i})" class="btn-gold" style="padding:5px; font-size:0.7rem;">APPROVE</button>`}
+                            <button onclick="downloadImage('${u.img}', '${u.n}')" style="background:#444; color:white; border:none; padding:5px; border-radius:5px; font-size:0.7rem; cursor:pointer;">SAVE</button>
+                            <button onclick="deleteUser(${i})" style="background:#c0392b; color:white; border:none; padding:5px; border-radius:5px; font-size:0.7rem; cursor:pointer;">DEL</button>
+                        </div>
+                    </td>
+                </tr>`).join('');
+        }
     }
 
-    function restartTicker() {
-        const ticker = document.getElementById('tickerContent');
-        if(ticker) {
-            ticker.style.animation = 'none';
-            ticker.offsetHeight; 
-            ticker.style.animation = 'ticker 30s linear infinite';
+    function viewImage(src) {
+        const modal = document.getElementById('imageModal');
+        document.getElementById('modalImg').src = src;
+        modal.style.display = 'flex';
+    }
+
+    function approveUser(i) {
+        if(confirm("Approve payment for " + users[i].n + "?")) {
+            users[i].v = true;
+            sync();
         }
     }
 
     function downloadImage(dataUrl, userName) {
         const link = document.createElement('a');
         link.href = dataUrl;
-        link.download = `IRC_Verify_${userName}.png`;
-        document.body.appendChild(link);
+        link.download = `IRC_Receipt_${userName}.png`;
         link.click();
-        document.body.removeChild(link);
-    }
-
-    function addScore() {
-        const cat = document.getElementById('mCat').value;
-        const m = document.getElementById('mIn').value, v = document.getElementById('sIn').value;
-        if(m && v) { scores.unshift({cat, m, v}); sync(); document.getElementById('mIn').value = ""; document.getElementById('sIn').value = ""; }
-    }
-    function deleteScore(i) { if(confirm("Delete result?")) { scores.splice(i, 1); sync(); } }
-    
-    function addEvent() { const v = document.getElementById('newEv').value; if(v) { acts.push(v); sync(); document.getElementById('newEv').value=""; } }
-    function deleteEvent(i) { if(confirm("Delete this event?")) { acts.splice(i,1); sync(); } }
-
-    function deleteUser(i) { if(confirm("Delete participant forever?")) { users.splice(i, 1); sync(); } }
-    
-    function updateTickerText() { const val = document.getElementById('tickerInput').value; if(val) { tickerText = val; sync(); alert("Updated!"); } }
-
-    function verifyParticipant(i) {
-        let input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*';
-        input.onchange = e => {
-            let file = e.target.files[0];
-            let reader = new FileReader();
-            reader.onload = () => { users[i].v = true; users[i].img = reader.result; sync(); };
-            reader.readAsDataURL(file);
-        };
-        input.click();
     }
 
     document.getElementById('bookingForm').onsubmit = function(e) {
         e.preventDefault();
-        users.push({ n: document.getElementById('uName').value, p: document.getElementById('uPhone').value, a: document.getElementById('uAct').value, v: false });
-        sync();
-        alert("Success! Waiting for verification.");
-        showPage('ticket-page');
+        const file = document.getElementById('uReceipt').files[0];
+        if(!file) return alert("Please upload receipt");
+        
+        const reader = new FileReader();
+        reader.onload = () => {
+            users.push({ 
+                n: document.getElementById('uName').value, 
+                p: document.getElementById('uPhone').value, 
+                a: document.getElementById('uAct').value, 
+                img: reader.result, 
+                v: false 
+            });
+            sync();
+            alert("Success! Waiting for admin approval.");
+            showPage('ticket-page');
+        };
+        reader.readAsDataURL(file);
     };
 
     function checkMyTicket() {
@@ -297,14 +306,19 @@
             ui.style.display = 'block';
             ui.innerHTML = `<h1 style="border-bottom: 2px solid #000; padding-bottom: 10px;">IRC PASS</h1>`;
             myTickets.forEach(user => {
+                const activityLower = user.a.toLowerCase();
+                let passportExtra = (activityLower.includes("passport") || activityLower.includes("جواز") || activityLower.includes("jazaz")) 
+                    ? `<div class="passport-msg">PLEASE PROCEED TO THE RECEPTION TO CLAIM YOUR PHYSICAL PASSPORT</div>` 
+                    : "";
+                
                 ui.innerHTML += `<div style="margin:20px 0; border:1px dashed #000; padding:15px; text-align:left; font-weight:bold;">
-                    <img src="${user.img}" style="width:100%; height:150px; object-fit:cover; margin-bottom:10px; border-radius:10px;">
                     <p style="font-size:0.8rem; color:#666;">HOLDER</p><p>${user.n}</p>
                     <p style="font-size:0.8rem; color:#666; margin-top:10px;">ACTIVITY</p><p style="color:var(--gold)">${user.a}</p>
+                    ${passportExtra}
                     <p style="margin-top:10px; color:green; text-align:center;">● VERIFIED</p></div>`;
             });
             ui.innerHTML += `<button onclick="window.print()" class="btn-gold">Download PDF</button><p onclick="location.reload()" style="margin-top:20px; color:blue; cursor:pointer;">Back</p>`;
-        } else { alert("Not verified yet."); }
+        } else { alert("Not verified or wrong number."); }
     }
 
     function showPage(id) {
@@ -317,24 +331,25 @@
 
     function tryLogin() { if(document.getElementById('adminPass').value === "IRCOC12") showPage('admin-dash'); else alert("Denied"); }
 
+    function restartTicker() {
+        const ticker = document.getElementById('tickerContent');
+        if(ticker) { ticker.style.animation = 'none'; ticker.offsetHeight; ticker.style.animation = 'ticker 30s linear infinite'; }
+    }
+    function addScore() {
+        const cat = document.getElementById('mCat').value;
+        const m = document.getElementById('mIn').value, v = document.getElementById('sIn').value;
+        if(m && v) { scores.unshift({cat, m, v}); sync(); document.getElementById('mIn').value = ""; document.getElementById('sIn').value = ""; }
+    }
+    function deleteScore(i) { if(confirm("Delete?")) { scores.splice(i, 1); sync(); } }
+    function addEvent() { const v = document.getElementById('newEv').value; if(v) { acts.push(v); sync(); document.getElementById('newEv').value=""; } }
+    function deleteEvent(i) { if(confirm("Delete?")) { acts.splice(i,1); sync(); } }
+    function deleteUser(i) { if(confirm("Delete user?")) { users.splice(i, 1); sync(); } }
+    function updateTickerText() { const val = document.getElementById('tickerInput').value; if(val) { tickerText = val; sync(); alert("Updated!"); } }
+
     const canvas = document.getElementById('bg-canvas');
     const ctx = canvas.getContext('2d');
-    let particles = [];
-    const mouse = { x: null, y: null };
-    window.addEventListener('mousemove', (e) => { mouse.x = e.x; mouse.y = e.y; });
-    class Particle {
-        constructor() { this.x = Math.random() * canvas.width; this.y = Math.random() * canvas.height; this.size = Math.random() * 2 + 1; this.baseX = this.x; this.baseY = this.y; this.density = (Math.random() * 30) + 1; }
-        draw() { ctx.fillStyle = 'rgba(212, 175, 55, 0.4)'; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); }
-        update() {
-            let dx = mouse.x - this.x; let dy = mouse.y - this.y;
-            let distance = Math.sqrt(dx*dx + dy*dy);
-            if (distance < 100) { this.x -= dx/10; this.y -= dy/10; }
-            else { if (this.x !== this.baseX) this.x -= (this.x - this.baseX)/20; if (this.y !== this.baseY) this.y -= (this.y - this.baseY)/20; }
-        }
-    }
-    function initC() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; particles = []; for (let i = 0; i < 80; i++) particles.push(new Particle()); }
-    function animC() { ctx.clearRect(0,0,canvas.width,canvas.height); particles.forEach(p => { p.draw(); p.update(); }); requestAnimationFrame(animC); }
-    initC(); animC(); window.addEventListener('resize', initC);
+    function initC() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    initC(); window.addEventListener('resize', initC);
 
     window.onload = () => {
         const target = new Date("May 8, 2026 00:00:00").getTime();
